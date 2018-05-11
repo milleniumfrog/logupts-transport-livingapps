@@ -1,6 +1,6 @@
 import { LogUpTs, Transport, InternalLogUpTsOptions } from 'logupts/dist/umd/logupts';
 import { LogUpTsTransportFile } from 'logupts/dist/umd/logupts-transport-file';
-import  LivingSDK, {Auth_Token, LivingApi, LAPIRecord} from 'livingsdk/dist/umd/livingsdk'
+import  LivingSDK, {Auth_Token, LivingApi, LAPIRecord, LivingAPIOptions} from 'livingsdk/dist/umd/livingsdk'
 import * as http from 'http';
 import * as process from 'process';
 import * as path from 'path';
@@ -11,11 +11,13 @@ export default class Loguptstransportlivingapps implements Transport {
 	public key: string;
 	static counter: number = 0;
 	private argv: string[];
-	private lsdk: any;
+
 	private logger: LogUpTs;
 	private appId: string;
 	constructor(livingAppsConfig: LTLA_LAConfig, public staticData: any , public toPrint: string[], 
-		private reportMail: string, private mailSettings: {auth:{user: string, pass: string}, host: string, port: number, secure: boolean}) {
+		private reportMail: string, private mailSettings: {auth:{user: string, pass: string}, host: string, port: number, secure: boolean},
+		private lsdk: LivingSDK
+	) {
 		// store all arguments
 		this.argv = process.argv;
 		this.logger = new LogUpTs({
@@ -32,7 +34,6 @@ export default class Loguptstransportlivingapps implements Transport {
 		this.key = `LTLA${Loguptstransportlivingapps.counter}`;
 		++Loguptstransportlivingapps.counter;
 		this.logger.info("created key")
-		this.lsdk = new LivingSDK({}, livingAppsConfig.username, livingAppsConfig.password);
 		this.logger.info("created livingapps instance");
 		this.appId = livingAppsConfig.appId;
 

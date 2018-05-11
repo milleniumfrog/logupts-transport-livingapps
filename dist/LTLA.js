@@ -6,9 +6,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -22,23 +19,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "logupts/dist/umd/logupts", "logupts/dist/umd/logupts-transport-file", "livingsdk/dist/umd/livingsdk", "process", "path", "nodemailer"], factory);
+        define(["require", "exports", "logupts/dist/umd/logupts", "logupts/dist/umd/logupts-transport-file", "process", "path", "nodemailer"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const logupts_1 = require("logupts/dist/umd/logupts");
     const logupts_transport_file_1 = require("logupts/dist/umd/logupts-transport-file");
-    const livingsdk_1 = __importDefault(require("livingsdk/dist/umd/livingsdk"));
     const process = __importStar(require("process"));
     const path = __importStar(require("path"));
     const nodemailer = __importStar(require("nodemailer"));
     class Loguptstransportlivingapps {
-        constructor(livingAppsConfig, staticData, toPrint, reportMail, mailSettings) {
+        constructor(livingAppsConfig, staticData, toPrint, reportMail, mailSettings, lsdk) {
             this.staticData = staticData;
             this.toPrint = toPrint;
             this.reportMail = reportMail;
             this.mailSettings = mailSettings;
+            this.lsdk = lsdk;
             // store all arguments
             this.argv = process.argv;
             this.logger = new logupts_1.LogUpTs({
@@ -53,7 +50,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
             this.key = `LTLA${Loguptstransportlivingapps.counter}`;
             ++Loguptstransportlivingapps.counter;
             this.logger.info("created key");
-            this.lsdk = new livingsdk_1.default({}, livingAppsConfig.username, livingAppsConfig.password);
             this.logger.info("created livingapps instance");
             this.appId = livingAppsConfig.appId;
         }
