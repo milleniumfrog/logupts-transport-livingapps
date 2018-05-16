@@ -6,6 +6,7 @@ export default class Loguptstransportlivingapps implements Transport {
     private reportMail;
     private mailSettings;
     private lsdk;
+    private datasourceID;
     key: string;
     static counter: number;
     private argv;
@@ -19,8 +20,8 @@ export default class Loguptstransportlivingapps implements Transport {
         host: string;
         port: number;
         secure: boolean;
-    }, lsdk: LivingSDK);
-    exec(transportOptions: InternalLogUpTsOptions, str: string): Promise<any>;
+    }, lsdk: LivingSDK, datasourceID?: string);
+    exec(transportOptions: InternalLogUpTsOptions, str: string): Promise<void>;
 }
 export interface LTLA_LAConfig {
     username: string;

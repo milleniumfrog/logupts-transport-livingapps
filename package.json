@@ -1,6 +1,6 @@
 {
   "name": "logupts_transport_livingapps",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "a transport plugin for logupts and livingapps",
   "main": "dist/LTLA.js",
   "scripts": {

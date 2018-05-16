@@ -1,6 +1,6 @@
 import { LogUpTs, Transport, InternalLogUpTsOptions } from 'logupts/dist/umd/logupts';
 import { LogUpTsTransportFile } from 'logupts/dist/umd/logupts-transport-file';
-import  LivingSDK, {Auth_Token, LivingApi, LAPIRecord, LivingAPIOptions} from 'livingsdk/dist/umd/livingsdk'
+import LivingSDK, { Auth_Token, LivingApi, LAPIRecord, LivingAPIOptions } from 'livingsdk/dist/umd/livingsdk'
 import * as http from 'http';
 import * as process from 'process';
 import * as path from 'path';
@@ -14,9 +14,9 @@ export default class Loguptstransportlivingapps implements Transport {
 
 	private logger: LogUpTs;
 	private appId: string;
-	constructor(livingAppsConfig: LTLA_LAConfig, public staticData: any , public toPrint: string[], 
-		private reportMail: string, private mailSettings: {auth:{user: string, pass: string}, host: string, port: number, secure: boolean},
-		private lsdk: LivingSDK
+	constructor(livingAppsConfig: LTLA_LAConfig, public staticData: any, public toPrint: string[],
+		private reportMail: string, private mailSettings: { auth: { user: string, pass: string }, host: string, port: number, secure: boolean },
+		private lsdk: LivingSDK, private datasourceID = "default"
 	) {
 		// store all arguments
 		this.argv = process.argv;
@@ -38,7 +38,7 @@ export default class Loguptstransportlivingapps implements Transport {
 		this.appId = livingAppsConfig.appId;
 
 	}
-	async exec(transportOptions: InternalLogUpTsOptions, str: string){
+	async exec(transportOptions: InternalLogUpTsOptions, str: string) {
 		this.logger.info('start execution');
 		let send: boolean = false;
 		for (let i of this.toPrint) {
@@ -52,50 +52,46 @@ export default class Loguptstransportlivingapps implements Transport {
 			this.logger.info('finished execution');
 			return
 		};
-		let LAAPI = await this.lsdk.get(this.appId);
-		this.logger.info('loaded living template from livingapps');
-		(<any>transportOptions).transport = (<any>transportOptions).transport ||{};
-		(<any>transportOptions).transport.laTransport = (<any>transportOptions).transport.laTransport || {};
-		for(let key in this.staticData) {
-			(<any>transportOptions).transport.laTransport[key] =  (<any>transportOptions).transport.laTransport[key] || this.staticData[key];
+		try {
+			let LAAPI = await this.lsdk.get(this.appId);
+			this.logger.info('loaded living template from livingapps');
+			(<any>transportOptions).transport = (<any>transportOptions).transport || {};
+			(<any>transportOptions).transport.laTransport = (<any>transportOptions).transport.laTransport || {};
+			for (let key in this.staticData) {
+				(<any>transportOptions).transport.laTransport[key] = (<any>transportOptions).transport.laTransport[key] || this.staticData[key];
+			}
+			(<any>transportOptions).transport.laTransport.message = str;
+			let record = await LAAPI.get('datasources').get(this.datasourceID).app.insert((<any>transportOptions).transport.laTransport)
+			this.logger.info('inserted record');
+			this.logger.info('finished execution');
+			return;
+			// })
 		}
-		(<any>transportOptions).transport.laTransport.message = str;
-		console.log((<any>transportOptions).transport.laTransport)
-		return LAAPI.get('datasources').get('default').app.insert((<any>transportOptions).transport.laTransport)
-			.then((record: any) => {
-				this.logger.info('inserted record');
-				this.logger.info('finished execution');
-				return record;
-			})
-			.catch((error: any) => {
-				this.logger.info("sending message to livingapps failed, send mail instead");
-				return new Promise((resolve, reject) => {
-					nodemailer.createTestAccount((err: Error | null, account: nodemailer.TestAccount) => {
-						let transporter: nodemailer.Transporter = nodemailer.createTransport(this.mailSettings);
+		catch (error) {
+			this.logger.info("sending message to livingapps failed, send mail instead");
+				// nodemailer.createTestAccount((err: Error | null, account: nodemailer.TestAccount) => {
+				let transporter: nodemailer.Transporter = nodemailer.createTransport(this.mailSettings);
 
-						let mailOptions: nodemailer.SendMailOptions = {
-							from: `logupts-Error ${account.user}`,
-							to: this.reportMail,
-							subject: 'Error',
-							text: `Failed to send "${(<any>transportOptions).transport.laTransport.message}" to LivingApps`
-						};
+				let mailOptions: nodemailer.SendMailOptions = {
+					from: `logupts-Error ${this.mailSettings.auth.user}`,
+					to: this.reportMail,
+					subject: 'Error',
+					text: `Failed to send "${(<any>transportOptions).transport.laTransport.message}" to LivingApps, cause of ${error.message}`
+				};
 
-					    transporter.sendMail(mailOptions, (error, info) => {
-							if (error) {
-								this.logger.info("sending mail failed");
-								reject(error);
-							}
-							this.logger.info(`Message sent: ${info.messageId}`);
-							// Preview only available when sending through an Ethereal account
-							// console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-							this.logger.info("sending mail was a success");
-							// Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-							// Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
-							resolve();
-						});
-					});
+				transporter.sendMail(mailOptions, (error, info) => {
+					if (error) {
+						this.logger.info("sending mail failed");
+						throw (error);
+					}
+					this.logger.info(`Message sent: ${info.messageId}`);
+					// Preview only available when sending through an Ethereal account
+					// console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+					this.logger.info("sending mail was a success");
+					// Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+					// Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 				});
-			})
+		}
 	}
 }
 
